@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdbool.h>
 #include <getopt.h>
 
 #include "colors.h"
@@ -25,6 +26,7 @@ int main (int argc, char **argv) {
     char *unit = "";
     int total = 0;
     int completed = 0;
+    bool terminate = false;
 
     char *color = DEFAULT_COLOR;
     char *reset = DEFAULT_RESET;
@@ -32,12 +34,13 @@ int main (int argc, char **argv) {
     int opt;
     int option_index = 0;
 
-    const char *optstring = "T:u:c:r:";
+    const char *optstring = "T:u:c:r:t";
     static const struct option opts[] = {
         {"text", required_argument, 0, 'T'},
         {"unit", optional_argument, 0, 'u'},
         {"color", optional_argument, 0, 'c'},
-        {"reset", optional_argument, 0, 'r'}
+        {"reset", optional_argument, 0, 'r'},
+        {"terminate", no_argument, 0, 't'}
     };
 
     while ((opt = getopt_long(argc, argv, optstring, opts, &option_index)) != -1) {
@@ -54,6 +57,9 @@ int main (int argc, char **argv) {
                 break;
             case 'u':
                 unit = optarg;
+                break;
+            case 't':
+                terminate = true;
                 break;
         }
     }
@@ -91,7 +97,11 @@ int main (int argc, char **argv) {
         }
     }
 
-    printf(RESET "\r");
+    if (terminate) {
+        printf(RESET "\n");
+    } else {
+        printf(RESET "\r");
+    }
 
     return 0;
 }
