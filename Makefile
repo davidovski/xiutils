@@ -13,6 +13,9 @@ build: build-hbar
 install-headers: src/*.h
 	install -m644 src/*.h ${DESTDIR}${PREFIX}/include
 
+install-chroot: src/xichroot
+	install -m755 src/xichroot ${DESTDIR}${PREFIX}/bin/
+
 install-hbar: bin/hbar
 	install -m755 bin/hbar ${DESTDIR}${PREFIX}/bin
 
