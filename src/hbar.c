@@ -17,6 +17,9 @@
 #define DEFAULT_COLOR BLACK BG_WHITE 
 #define DEFAULT_RESET WHITE BG_BLACK
 
+#define SAVE_POS "\033[s"
+#define LOAD_POS "\033[u"
+
 int main (int argc, char **argv) {
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
@@ -26,6 +29,7 @@ int main (int argc, char **argv) {
     char *unit = "";
     int total = 0;
     int completed = 0;
+    int line = 1;
     bool terminate = false;
 
     char *color = DEFAULT_COLOR;
@@ -34,12 +38,13 @@ int main (int argc, char **argv) {
     int opt;
     int option_index = 0;
 
-    const char *optstring = "T:u:c:r:t";
+    const char *optstring = "T:u:c:r:l:t";
     static const struct option opts[] = {
         {"text", required_argument, 0, 'T'},
         {"unit", optional_argument, 0, 'u'},
         {"color", optional_argument, 0, 'c'},
         {"reset", optional_argument, 0, 'r'},
+        {"line", optional_argument, 0, ';'},
         {"terminate", no_argument, 0, 't'}
     };
 
@@ -61,6 +66,9 @@ int main (int argc, char **argv) {
             case 't':
                 terminate = true;
                 break;
+            case 'l':
+                line = atoi(optarg);
+                break;
         }
     }
 
@@ -73,9 +81,14 @@ int main (int argc, char **argv) {
     completed = atoi(argv[optind]);
     total = atoi(argv[optind+1]);
 
+    if (line != -1) {
+        printf("\033[%dA", line, 0);
+    }
+
     char *count = malloc(width);
     sprintf(count, "[%d%s/%d%s]", completed, unit, total, unit);
 
+    printf(RESET "\r");
     printf(color);
     for (int i = 0; i < width; i++) {
         int reset_at = 0;
@@ -97,11 +110,13 @@ int main (int argc, char **argv) {
         }
     }
 
+    if (line != -1) {
+        printf("\033[%dB", line, 0);
+    }
     if (terminate) {
-        printf(RESET "\n");
-    } else {
         printf(RESET "\r");
     }
+
 
     return 0;
 }
