@@ -29,7 +29,7 @@ int main (int argc, char **argv) {
     char *unit = "";
     int total = 0;
     int completed = 0;
-    int line = 1;
+    int line = 0;
     bool terminate = false;
 
     char *color = DEFAULT_COLOR;
@@ -114,7 +114,7 @@ int main (int argc, char **argv) {
         printf("\033[%dB", line, 0);
     }
     if (terminate) {
-        printf(RESET "\r");
+        printf(RESET "\n");
     }
 
 
