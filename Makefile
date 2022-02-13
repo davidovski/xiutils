@@ -8,7 +8,7 @@ PREFIX=/usr
 .DEFAULT_GOAL := build
 
 install: install-hbar install-headers
-build: build-hbar
+build: prepare build-hbar
 
 install-headers: src/*.h
 	install -m644 src/*.h ${DESTDIR}${PREFIX}/include
