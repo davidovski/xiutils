@@ -5,7 +5,7 @@ DESTDIR=
 PREFIX=/usr
 
 
-.DEFAULT_GOAL := build-hbar
+.DEFAULT_GOAL := build
 
 install: install-hbar install-headers
 build: build-hbar
