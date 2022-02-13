@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PARSECONF="./src/parseconf"
+PARSECONF="./src/parseconf.sh"
 
 SIMPLECONF="./test/simple.conf"
 
