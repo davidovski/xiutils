@@ -12,13 +12,13 @@ build: build-hbar
 install-headers: src/*.h
 	install -m644 src/*.h ${DESTDIR}${PREFIX}/include
 
-install-shtests: src/shtests
+install-shtests: src/shtests.sh
 	install -m755 src/shtests.sh ${DESTDIR}${PREFIX}/bin/shtests
 
-install-chroot: src/xichroot
+install-chroot: src/xichroot.sh
 	install -m755 src/xichroot.sh ${DESTDIR}${PREFIX}/bin/xichroot
 
-install-parseconf: src/parseconf
+install-parseconf: src/parseconf.sh
 	install -m755 src/parseconf.sh ${DESTDIR}${PREFIX}/bin/parseconf
 
 install-hbar: build-hbar
