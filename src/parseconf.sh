@@ -13,45 +13,52 @@ Arguments:
 EOF
 }
 
+getlevel() {
+    for i in $*; do
+        printf $i
+        printf '.'
+    done
+}
+
+parse_line() {
+    [ $# == "0" ] && return
+
+    local line="$@"
+    local key=$1
+    shift
+    local value="$@"
+
+    [ "$key" = "include" ] && parse $value && return
+    [ "$key" = "]" ] && unset list[-1] && printf "\n" && return
+    [ "$key" = "}" ] && unset level[-1] && return
+
+    case ${value: -1} in 
+        "{")
+            level+=("$key")
+            ;;
+        "[")
+            list+=("$key")
+            printf "$(getlevel ${level[@]})$key:"
+            ;;
+        *)
+
+            [ "${#list[@]}" == "0" ] && 
+                printf "$(getlevel ${level[@]})$key:$value\n" ||
+                printf "$line "
+            ;;
+    esac
+}
+
 # print the parsed values from the config file in key:value format
 #
 parse () {
     local file="$1"
-    local level=""
-    local list=""
+    export level=()
+    export list=()
     while IFS= read -r line; do
-        line=$(sed "s/\s\+/ /g" <<< "$line" | sed "s/^\s\|\s$\|;*$//g")
-        
-        grep -q "^#" <<< "$line" && continue
-        grep -q "." <<< "$line" || continue
-
-        local key=$(echo $line | cut -d" " -f1)
-        local value=$(echo $line | cut -d" " -f2-)
-
-        [ "$key" = "include" ] && parse $value && continue
-
-        case ${value: -1} in 
-            "{")
-                level="$level$key."
-                ;;
-            "[")
-                list="$list$key."
-                printf "$level$key:"
-                ;;
-            "}")
-                level=$(sed "s/[^\.]\w*\.$//g" <<< "$level")
-                ;;
-            "]")
-                printf "\n"
-                list=$(sed "s/[^\.]\w*\.$//g" <<< "$list")
-                ;;
-            *)
-
-                grep -q "." <<< "$list" && 
-                    printf "$line " ||
-                    printf "$level$key:$value\n"
-                ;;
-        esac
+        # strip whitespace
+        line=$(sed "s/^#.*$\|\s(\s\+)\|^\s\|\s^\|;*$//g" <<< "$line")
+        parse_line $line
     done < "$file"
 }
 
@@ -99,8 +106,12 @@ done
 
 shift $((OPTIND-1))
 
-[ -z ${count} ] &&
-    filter "$@" ||
-    filter "$@" | tail -n $count
+if echo $@ | grep -q "."; then
+    [ -z ${count} ] &&
+        filter "$@" ||
+        filter "$@" | tail -n $count
+else 
+    parse $CONF_FILE  
+fi
 
 
