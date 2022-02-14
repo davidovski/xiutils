@@ -28,7 +28,7 @@ parse_line() {
     shift
     local value="$@"
 
-    [ "$key" = "include" ] && parse $value && return
+    [ "$key" = "include" ] && cat $value | parse && return
     [ "$key" = "]" ] && unset list[-1] && printf "\n" && return
     [ "$key" = "}" ] && unset level[-1] && return
 
@@ -53,30 +53,13 @@ parse_line() {
 #
 parse () {
     local file="$1"
+
     export level=()
     export list=()
     while IFS= read -r line; do
         # strip whitespace
-        line=$(sed "s/^#.*$\|\s(\s\+)\|^\s\|\s^\|;*$//g" <<< "$line")
-        parse_line $line
-    done < "$file"
-}
-
-# Filter the parsed file for specific keys
-#
-filter () {
-    local pattern=
-
-    [ $# = 0 ] &&
-        pattern=".*" ||
-        pattern=$(sed "s/\*/[^:]*/g"<<< "$@")
-
-    $print_keys && 
-        pattern="s/^($pattern:.+)/\1/p" ||
-        pattern="s/^$pattern:(.+)/\1/p"
-
-
-    parse $CONF_FILE | sed -rn $pattern
+        parse_line $line 
+    done < "/dev/stdin" 
 }
 
 # Use the env variable if exists
@@ -98,7 +81,7 @@ while getopts ":f:c:v" opt; do
             print_keys=false
             ;;
         c)
-            count="${OPTARG}"
+            count="${OPTARG}q"
             ;;
         *)
     esac
@@ -106,12 +89,12 @@ done
 
 shift $((OPTIND-1))
 
-if echo $@ | grep -q "."; then
-    [ -z ${count} ] &&
-        filter "$@" ||
-        filter "$@" | tail -n $count
-else 
-    parse $CONF_FILE  
-fi
+[ $# = 0 ] &&
+    pattern=".*" ||
+    pattern=$(sed "s/\*/[^:]*/g" <<< "$@")
 
+$print_keys && 
+    pattern="s/^($pattern:.+)/\1/p;${count}" ||
+    pattern="s/^$pattern:(.+)/\1/p;${count}"
 
+sed "s/^#.*$\|\s(\s\+)\|^\s\|\s^\|;*$//g" $CONF_FILE | parse $@ | sed -rn $pattern

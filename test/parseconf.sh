@@ -116,6 +116,6 @@ dict {
 }
     "
     retval=$(${PARSECONF} -c 1 "dict.*" <<< "$config")
-    [ "$retval" = "dict.d:4" ]
+    [ "$retval" = "dict.a:1" ]
 }
 
