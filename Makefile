@@ -6,7 +6,7 @@ PREFIX=/usr
 
 .DEFAULT_GOAL := build
 
-install: install-hbar install-colors install-parseconf install-shtests 
+install: install-hbar install-colors install-parseconf install-shtests install-glyphs
 build: build-hbar 
 
 install-headers: src/*.h
@@ -26,6 +26,9 @@ install-hbar: build-hbar
 
 install-colors: src/colors.list
 	sh src/generate_colors.sh ${DESTDIR}${PREFIX} src/colors.list
+
+install-glyphs: src/glyphs.sh
+	install -m755 src/glyphs.sh ${DESTDIR}${PREFIX}/lib
 
 check-parseconf: 
 	shtests ./test/parseconf.sh
