@@ -15,7 +15,7 @@
 #include "colors.h"
 
 #define DEFAULT_COLOR BLACK BG_WHITE 
-#define DEFAULT_RESET WHITE BG_BLACK
+#define DEFAULT_RESET WHITE BG_DEFAULT
 
 #define SAVE_POS "\033[s"
 #define LOAD_POS "\033[u"
