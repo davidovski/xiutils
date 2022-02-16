@@ -54,7 +54,6 @@ int main (int argc, char **argv) {
                 text = optarg;
                 break;
             case 'c':
-                printf("%s color is \n", optarg);
                 color = optarg;
                 break;
             case 'r':
