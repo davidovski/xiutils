@@ -118,7 +118,7 @@ int main (int argc, char **argv) {
 
     printf(RESET "\r");
     printf(color);
-    for (int i = 0; i < width; i++) {
+    for (int i = 0; i <= width; i++) {
         int reset_at = 0;
         if (total > 0) {
             float percent = (float) completed / (float) total;
@@ -139,7 +139,7 @@ int main (int argc, char **argv) {
     }
 
     if (line != -1) {
-        printf("\033[%dB", line, 0);
+        printf("\033[%dB", line);
     }
     if (terminate) {
         printf(RESET "\n");

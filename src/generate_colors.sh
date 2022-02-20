@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 PREFIX=$1
 
@@ -35,7 +35,7 @@ append_sh() {
 }
 
 while IFS= read -r line; do
-    grep -q "." <<< "$line" || continue
+    echo "$line" | grep -q "." || continue
     name=$(echo $line | awk '{ print $1 }')
     code=$(echo $line | awk '{ print $2 }')
 
