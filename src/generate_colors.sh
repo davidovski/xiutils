@@ -31,7 +31,7 @@ append_header() {
 }
 
 append_sh() {
-    printf "export %s=$'%s'\n" $1 $(echo $2 | sed -rn "s/\"(.*)\"/\1/p") >> $shlib
+    printf 'export %s=$(printf %s)\n' $1 $2 >> $shlib
 }
 
 while IFS= read -r line; do
