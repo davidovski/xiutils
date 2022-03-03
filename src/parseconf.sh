@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 usage () {
     printf "Usage $0 "
@@ -13,15 +13,10 @@ Arguments:
 EOF
 }
 
-getlevel() {
-    for i in $*; do
-        printf $i
-        printf '.'
-    done
-}
-
+# parse a single config file line
+#
 parse_line() {
-    [ $# == "0" ] && return
+    [ $# = "0" ] && return
 
     local line="$@"
     local key=$1
@@ -29,21 +24,21 @@ parse_line() {
     local value="$@"
 
     [ "$key" = "include" ] && cat $value | parse && return
-    [ "$key" = "]" ] && unset list[-1] && printf "\n" && return
-    [ "$key" = "}" ] && unset level[-1] && return
+    [ "$key" = "]" ] && unset list=${list%.*} && printf "\n" && return
+    [ "$key" = "}" ] && unset level=${level%.*} && return
 
-    case ${value: -1} in 
+    case ${value##* } in 
         "{")
-            level+=("$key")
+            level="${level}${key}."
             ;;
         "[")
-            list+=("$key")
-            printf "$(getlevel ${level[@]})$key:"
+            list="${list}${list:+.}${key}"
+            printf "$level$key:"
             ;;
         *)
 
-            [ "${#list[@]}" == "0" ] && 
-                printf "$(getlevel ${level[@]})$key:$value\n" ||
+            [ "${#list}" = "0" ] && 
+                printf "$level$key:$value\n" ||
                 printf "$line "
             ;;
     esac
@@ -54,10 +49,9 @@ parse_line() {
 parse () {
     local file="$1"
 
-    export level=()
-    export list=()
+    export level=""
+    export list=""
     while IFS= read -r line; do
-        # strip whitespace
         parse_line $line 
     done < "/dev/stdin" 
 }
@@ -91,10 +85,13 @@ shift $((OPTIND-1))
 
 [ $# = 0 ] &&
     pattern=".*" ||
-    pattern=$(sed "s/\*/[^:]*/g" <<< "$@")
+    pattern=$(echo $@ | sed "s/\*/[^:]*/g")
 
 $print_keys && 
     pattern="s/^($pattern:.+)/\1/p;${count}" ||
     pattern="s/^$pattern:(.+)/\1/p;${count}"
 
-sed "s/^#.*$\|\s(\s\+)\|^\s\|\s^\|;*$//g" $CONF_FILE | parse $@ | sed -rn $pattern
+# strip whitespace
+sed "s/^#.*$\|\s(\s\+)\|^\s\|\s^\|;*$//g" $CONF_FILE |
+    parse $@ | 
+    sed -rn $pattern

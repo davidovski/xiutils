@@ -1,7 +1,6 @@
 #!/bin/sh
 
 PARSECONF="./src/parseconf.sh"
-
 SIMPLECONF="./test/simple.conf"
 
 test_simple_loading () {
@@ -12,7 +11,7 @@ test_simple_parsing () {
     config="
 key value
     "
-    retval=$(${PARSECONF} key <<< "$config")
+    retval=$(printf "$config" | ${PARSECONF} key)
     [ "$retval" = "key:value" ]
 }
 
@@ -20,7 +19,7 @@ test_bad_formatting () {
     config="
       key       value    
     "
-    retval=$(${PARSECONF} key <<< "$config")
+    retval=$(printf "$config" | ${PARSECONF} key) 
     [ "$retval" = "key:value" ]
 }
 
@@ -28,7 +27,7 @@ test_unecessary_semicolons () {
     config="
 key value;
     "
-    retval=$(${PARSECONF} key <<< "$config")
+    retval=$(printf "$config" | ${PARSECONF} key)
     [ "$retval" = "key:value" ]
 }
 
@@ -36,7 +35,7 @@ test_extra_unecessary_semicolons () {
     config="
 key value;;;;;
     "
-    retval=$(${PARSECONF} key <<< "$config")
+    retval=$(printf "$config" | ${PARSECONF} key)
     [ "$retval" = "key:value" ]
 }
 
@@ -47,7 +46,7 @@ key2 value2
 key3 value3
 key4 value4
     "
-    retval=$(${PARSECONF} key2 <<< "$config")
+    retval=$(printf "$config" | ${PARSECONF} key2)
     [ "$retval" = "key2:value2" ]
 }
 
@@ -62,7 +61,7 @@ list [
     e
 ]
     "
-    retval=$(${PARSECONF} list <<< "$config")
+    retval=$(printf "$config" | ${PARSECONF} list)
     [ "$retval" = "list:a b c d e " ]
 }
 
@@ -76,7 +75,7 @@ dict {
     e 5
 }
     "
-    retval=$(${PARSECONF} dict.a <<< "$config")
+    retval=$(printf "$config" | ${PARSECONF} dict.a)
     [ "$retval" = "dict.a:1" ]
 }
 
@@ -89,7 +88,7 @@ test_include () {
     config="
 include test/simple.conf
     "
-    retval=$(${PARSECONF} key2 <<< "$config")
+    retval=$(printf "$config" | ${PARSECONF} key2)
     [ "$retval" = "key2:value2" ]
 }
 
@@ -102,7 +101,7 @@ dict {
     d 4
 }
     "
-    retval=$(${PARSECONF} "dict.*" <<< "$config" | wc -l)
+    retval=$(printf "$config" | ${PARSECONF} "dict.*" | wc -l)
     [ "$retval" = "4" ]
 }
 
@@ -115,7 +114,7 @@ dict {
     d 4
 }
     "
-    retval=$(${PARSECONF} -c 1 "dict.*" <<< "$config")
+    retval=$(printf "$config" | ${PARSECONF} -c 1 "dict.*")
     [ "$retval" = "dict.a:1" ]
 }
 

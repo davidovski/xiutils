@@ -33,7 +33,6 @@ install-glyphs: src/glyphs.sh
 check-parseconf: 
 	shtests ./test/parseconf.sh
 
-
 build-hbar: src/hbar.c install-colors
 	mkdir -pv bin
 	${CC} src/hbar.c -o bin/hbar ${FLAGS}

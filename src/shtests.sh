@@ -14,29 +14,35 @@
 PASS="${BLUE}[ ${GREEN}PASS${BLUE} ]${RESET}"
 FAIL="${BLUE}[ ${RED}FAIL${BLUE} ]${RESET}"
 
+V=false
+
 runtest () {
-    test_name=$(sed "s/_/ /g" <<< "$1")
+    test_name=$(echo $1 | sed "s/_/ /g")
     test_func="$2"
-    printf "${BLUE}[      ] ${RESET}$test_name\r";
+    printf "${BLUE}[      ] ${RESET}$test_name ";
     if "$test_func" ; then
-        printf "$PASS\n"
+        printf "\r$PASS\n"
         return 0
     else
-        printf "$FAIL\n"
+        printf "\r$FAIL\n"
         return 1
     fi
 }
+
+# TODO use getopt for this
+if [ "$1" = "-v" ]; then
+    shift
+    V=true
+fi
 
 if [ $# = "0" ]; then
     printf "${RED}No tests file has been provided\n"
     exit 1;
 else
-    source $@
+    . $@
 fi
 
-
-tests=$(declare -F | sed -rn "s/declare -f test_(.+)/\1/p")
-
+tests=$(sed -n "s/^test_\(.*\)\s*()\s*{/\1/p" $@)
 total=$(echo $tests | wc -w)
 passed=0
 failed=0

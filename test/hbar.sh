@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 HBAR=./bin/hbar
 TEXT="Hello there"
