@@ -31,7 +31,7 @@ install-colors: src/colors.list
 install-glyphs: src/glyphs.sh
 	install -m755 src/glyphs.sh ${DESTDIR}${PREFIX}/lib
 
-check-parseconf: ${DESTDIR}${PREFIX}/bin/shtests ./test/parseconf.sh
+check-parseconf: install-shtests test/parseconf.sh
 	${DESTDIR}${PREFIX}/bin/shtests ./test/parseconf.sh
 
 build-hbar: src/hbar.c install-colors
