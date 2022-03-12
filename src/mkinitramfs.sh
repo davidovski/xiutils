@@ -61,12 +61,12 @@ printf "OK\n"
 
 # copy any firmware
 printf "installing firmware..."
-cp -rv /lib/firmware/* lib/firmware/
+cp -r /lib/firmware/* lib/firmware/
 printf "OK\n"
 
 # copy any modules
 printf "installing modules..."
-cp  -rv /lib/modules/* lib/modules/
+cp  -r /lib/modules/* lib/modules/
 printf "OK\n"
 
 # create the initramfs image
