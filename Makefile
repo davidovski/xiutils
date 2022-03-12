@@ -16,9 +16,6 @@ install-headers: src/*.h
 install-shtests: src/shtests.sh
 	install -m755 src/shtests.sh ${DESTDIR}${PREFIX}/bin/shtests
 
-install-chroot: src/xichroot.sh
-	install -m755 src/xichroot.sh ${DESTDIR}${PREFIX}/bin/xichroot
-
 install-parseconf: src/parseconf.sh
 	install -m755 src/parseconf.sh ${DESTDIR}${PREFIX}/bin/parseconf
 
@@ -40,3 +37,17 @@ build-hbar: src/hbar.c install-colors
 
 clean:
 	rm -r bin
+
+
+# xichroot
+#
+install-chroot: src/xichroot.sh
+	install -m755 src/xichroot.sh ${DESTDIR}${PREFIX}/bin/xichroot
+
+
+# initramfs
+#
+install-mkinitramfs: src/mkinitramfs.sh src/initramfs-init.sh
+	install -m755 src/mkinitramfs.sh ${DESTDIR}${PREFIX}/bin/mkinitramfs
+	install -m755 src/initramfs-init.sh ${DESTDIR}${PREFIX}/bin/initramfs-init
+
