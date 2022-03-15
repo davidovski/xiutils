@@ -45,9 +45,3 @@ install-chroot: src/xichroot.sh
 	install -m755 src/xichroot.sh ${DESTDIR}${PREFIX}/bin/xichroot
 
 
-# initramfs
-#
-install-mkinitramfs: src/mkinitramfs.sh src/initramfs-init.sh
-	install -m755 src/mkinitramfs.sh ${DESTDIR}${PREFIX}/bin/mkinitramfs
-	install -m755 src/initramfs-init.sh ${DESTDIR}${PREFIX}/bin/initramfs-init
-
