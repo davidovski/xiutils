@@ -38,11 +38,9 @@ void human_format(int bytes, char *output) {
 
 size_t len(char *s) {
     size_t len = 0;
-    for (; *s; s++) {
-        if ((*s & 0XC0) != 0x80) {
+    for (; *s; s++) 
+        if ((*s & 0XC0) != 0x80) 
             len++;
-        }
-    }
     return len;
 }
 
@@ -50,17 +48,17 @@ void printat(char *s, size_t index) {
     index++;
     for (; *s; s++) {
         if ((*s & 0XC0) != 0x80) {
+            if (index <= 0) 
+                return;
             index--;
         }
         if (index <= 0) {
             fwrite(s, 1, 1, stdout);
-            if ((*s & 0XC0) == 0x80) 
-                return;
         }
     }
 }
 
-int main (int argc, char **argv) {
+int main(int argc, char **argv) {
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     int width = w.ws_col;
