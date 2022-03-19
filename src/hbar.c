@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <string.h>
 #include <stdbool.h>
 #include <getopt.h>
 
@@ -20,7 +19,7 @@
 #define SAVE_POS "\033[s"
 #define LOAD_POS "\033[u"
 
-static void human_format(int bytes, char *output) {
+void human_format(int bytes, char *output) {
 	char *suffix[] = {"B", "KB", "MB", "GB", "TB"};
 	char length = sizeof(suffix) / sizeof(suffix[0]);
 
@@ -33,6 +32,15 @@ static void human_format(int bytes, char *output) {
 	}
 
 	sprintf(output, "%.0lf%s", dblBytes, suffix[i]);
+}
+
+size_t len(char *s) {
+    size_t len = 0;
+    for (; *s; s++) {
+        if ((*s & 0XC0) != 0x80) 
+            len++;
+    }
+    return len;
 }
 
 int main (int argc, char **argv) {
@@ -100,13 +108,11 @@ int main (int argc, char **argv) {
     completed = atoi(argv[optind]);
     total = atoi(argv[optind+1]);
 
-    if (line != -1) {
+    if (line != -1) 
         printf("\033[%dA", line, 0);
-    }
 
     char *count = malloc(width);
     if (human) {
-        // i suck at these
         char *c = malloc(width);
         char *t = malloc(width);
         human_format(completed, c);
@@ -129,10 +135,10 @@ int main (int argc, char **argv) {
             printf(reset);
         }
 
-        if (text && i < strlen(text)) {
+        if (text && i < len(text)) {
             printf("%c", text[i]);
-        } else if (i + 1 > width - strlen(count)) {
-            printf("%c", count[i - width + strlen(count)]);
+        } else if (i + 1 > width - len(count)) {
+            printf("%c", count[i - width + len(count)]);
         } else {
             printf(" ");
         }
