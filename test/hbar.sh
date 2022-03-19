@@ -1,9 +1,16 @@
 #!/bin/sh
 
 HBAR=./bin/hbar
-TEXT="Hello there"
+#TEXT="Hello there"
+TEXT="Привет мир"
 UNIT="mb"
 MAX=100
+
+for x in $(seq $MAX); do
+    ${HBAR} -T "${TEXT}" -u ${UNIT} $x $MAX
+    read
+done
+${HBAR} -t -T "${TEXT}" -u ${UNIT} $x $MAX
 
 for x in $(seq $MAX); do
     ${HBAR} -T "${TEXT}" -u ${UNIT} $x $MAX

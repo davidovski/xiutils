@@ -8,7 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <unistr.h>
 #include <stdbool.h>
+#include <string.h>
 #include <getopt.h>
 
 #include "colors.h"
@@ -37,10 +39,25 @@ void human_format(int bytes, char *output) {
 size_t len(char *s) {
     size_t len = 0;
     for (; *s; s++) {
-        if ((*s & 0XC0) != 0x80) 
+        if ((*s & 0XC0) != 0x80) {
             len++;
+        }
     }
     return len;
+}
+
+void printat(char *s, size_t index) {
+    index++;
+    for (; *s; s++) {
+        if ((*s & 0XC0) != 0x80) {
+            index--;
+        }
+        if (index <= 0) {
+            fwrite(s, 1, 1, stdout);
+            if ((*s & 0XC0) == 0x80) 
+                return;
+        }
+    }
 }
 
 int main (int argc, char **argv) {
@@ -136,9 +153,9 @@ int main (int argc, char **argv) {
         }
 
         if (text && i < len(text)) {
-            printf("%c", text[i]);
+            printat(text, i);
         } else if (i + 1 > width - len(count)) {
-            printf("%c", count[i - width + len(count)]);
+            printat(count, i - width + len(count));
         } else {
             printf(" ");
         }
@@ -150,7 +167,6 @@ int main (int argc, char **argv) {
     if (terminate) {
         printf(RESET "\n");
     }
-
 
     return 0;
 }
