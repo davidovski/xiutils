@@ -23,22 +23,38 @@ parse_line() {
     shift
     local value="$@"
 
-    [ "$key" = "include" ] && cat $value | parse && return
-    [ "$key" = "]" ] && unset list=${list%.*} && printf "\n" && return
-    [ "$key" = "}" ] && unset level=${level%.*} && return
+    case $key in 
+        "include")
+            cat $value | parse
+            return
+            ;;
+        "]")
+            IFS=. 
+            set -- $list
+            list="${*%${!#}}"
+            IFS=" " 
+            printf "\n"
+            return
+            ;;
+        "}")
+            [ "$level" = "${level%.*}" ] &&
+                level="" || level=${level%.*}
+            return
+            ;;
+    esac
 
     case ${value##* } in 
         "{")
-            level="${level}${key}."
+            level="${level}${level:+.}${key}"
             ;;
         "[")
             list="${list}${list:+.}${key}"
-            printf "$level$key:"
+            printf "$level${level:+.}$key:"
             ;;
         *)
 
             [ "${#list}" = "0" ] && 
-                printf "$level$key:$value\n" ||
+                printf "$level${level:+.}$key:$value\n" ||
                 printf "$line "
             ;;
     esac
