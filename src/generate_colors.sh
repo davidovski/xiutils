@@ -1,9 +1,8 @@
 #!/bin/bash
+DIST=$1
 
-PREFIX=$1
-
-headerfile=${PREFIX}"/include/colors.h"
-shlib=${PREFIX}"/lib/colors.sh"
+headerfile=${DIST}/colors.h
+shlib=${DIST}/colors.sh
 
 cat > $shlib << "EOF"
 #

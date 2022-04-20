@@ -4,26 +4,32 @@ FLAGS=
 DESTDIR=
 PREFIX=/usr
 
+DIST=dist
+
 .DEFAULT_GOAL := build
 
 install: install-hbar install-colors install-parseconf install-shtests install-glyphs
 check: check-parseconf
-build: build-hbar 
+build: make-dist build-hbar 
+
+make-dist:
+	mkdir -p ${DIST}
 
 install-headers: src/*.h
-	install -m644 src/*.h ${DESTDIR}${PREFIX}/include
+	install -Dm644 src/*.h ${DESTDIR}${PREFIX}/include
 
 install-shtests: src/shtests.sh
-	install -m755 src/shtests.sh ${DESTDIR}${PREFIX}/bin/shtests
+	install -Dm755 src/shtests.sh ${DESTDIR}${PREFIX}/bin/shtests
 
 install-parseconf: src/parseconf.sh
-	install -m755 src/parseconf.sh ${DESTDIR}${PREFIX}/bin/parseconf
+	install -Dm755 src/parseconf.sh ${DESTDIR}${PREFIX}/bin/parseconf
 
 install-hbar: build-hbar
-	install -m755 bin/hbar ${DESTDIR}${PREFIX}/bin
+	install -Dm755 ${DIST}/hbar ${DESTDIR}${PREFIX}/bin
 
 install-colors: src/colors.list
-	sh src/generate_colors.sh ${DESTDIR}${PREFIX} src/colors.list
+	install -Dm755 ${DIST}/colors.sh ${DESTDIR}${PREFIX}/lib/colors.sh
+	install -Dm755 ${DIST}/colors.h ${DESTDIR}${PREFIX}/include/colors.h
 
 install-glyphs: src/glyphs.sh
 	install -m755 src/glyphs.sh ${DESTDIR}${PREFIX}/lib
@@ -31,17 +37,19 @@ install-glyphs: src/glyphs.sh
 check-parseconf: install-shtests test/parseconf.sh
 	${DESTDIR}${PREFIX}/bin/shtests ./test/parseconf.sh
 
-build-hbar: src/hbar.c 
-	mkdir -p bin
-	${CC} src/hbar.c -o bin/hbar ${FLAGS}
+build-hbar: generate-colors src/hbar.c 
+	${CC} -I${DIST} src/hbar.c -o ${DIST}/hbar ${FLAGS}
+
+generate-colors: src/colors.list
+	sh src/generate_colors.sh ${DIST}/ src/colors.list
 
 clean:
-	rm -r bin
+	rm -r ${DIST}
 
 
 # xichroot
 #
 install-chroot: src/xichroot.sh
-	install -m755 src/xichroot.sh ${DESTDIR}${PREFIX}/bin/xichroot
+	install -Dm755 src/xichroot.sh ${DESTDIR}${PREFIX}/bin/xichroot
 
 
