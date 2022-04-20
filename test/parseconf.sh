@@ -1,6 +1,6 @@
 #!/bin/sh
 
-PARSECONF="./src/parseconf.sh"
+PARSECONF="./dist/parseconf"
 SIMPLECONF="./test/simple.conf"
 
 test_simple_loading () {
