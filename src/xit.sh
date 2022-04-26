@@ -133,6 +133,16 @@ t_prnt_ptrn () {
     printf "$@$P"
 }
 
+t_cls_ptrn () {
+    local lines=$(tput lines)
+    tput cup 7 0
+    for i in $(seq $((lines-15))); do 
+        tput el
+        tput cud1
+    done
+    t_drw_ptrn
+}
+
 t_drw_ptrn () {
     local prfx=$1
     local flr=$(tput lines)
@@ -255,7 +265,7 @@ t_input () {
     stty $SAVED_TTY_SETTINGS
     t_msg "$@
 
-    >" > $(tty)
+>" > $(tty)
     t_yes_cur > $(tty)
     read var
     echo $var 
@@ -264,7 +274,7 @@ t_input () {
 
 t_tail() {
     local file=$1 lines=$(tput lines)
-    t_drw_txt 0 9 "$(tail -$((lines-16)) $1)"
+    t_drw_txt 0 7 "$(tail -$((lines-14)) $1)"
 }
 
 
@@ -273,15 +283,21 @@ t_demo () {
     t_no_cur
     t_drw_ptrn "${COLOR_FG}"
     t_prompt "Hello world?"
-    file=$(t_input "enter file to tail the end of:")
+    t_cls_ptrn
+    name=$(t_input "Enter your name")
+    t_prompt "Hello $name"
+
+    t_cls_ptrn
+
+    file=./xit.sh
     [ -f $file ] && {
         t_tail $file
-        sleep 10
     } || {
         t_prompt "The file $file does not exist"
     }
+    t_prompt "Clear"
+    t_cls_ptrn
     t_prompt "Exit?"
+
     t_clean
 }
-
-
