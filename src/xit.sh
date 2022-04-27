@@ -30,7 +30,9 @@ COLOR_FG=${LIGHT_BLUE}
 COLOR_BG=${BG_WHITE}
 
 t_init () {
-    t_styl_cur H
+    export LINES=$(tput lines)
+    export COLUMNS=$(tput cols)
+    t_styl_cur l
     tput clear
     t_set_tty
     t_gen_ptrn
@@ -79,36 +81,28 @@ t_set_cur () {
 max_line_length () {
     local max=-1
     while IFS= read -r line; do
-        [[ ${#line} -gt $max ]] && max=${#line}
+        [ "${#line}" -gt "$max" ] && max=${#line}
     done
     echo "$max"
 }
 
 t_styl_cur () {
     case "$1" in
-        H)
-            printf "\033[2 q";;
-        H0)
-            printf "\033[1 q";;
-        l)
-            printf "\033[6 q";;
-        l0)
-            printf "\033[5 q";;
-        _)
-            printf "\033[4 q";;
-        _0)
-            printf "\033[3 q";;
-        *)
-            printf"\033[0 q]";;
+        H) printf "\033[2 q";;
+        H0) printf "\033[1 q";;
+        l) printf "\033[6 q";;
+        l0) printf "\033[5 q";;
+        _) printf "\033[4 q";;
+        _0) printf "\033[3 q";;
+        *) printf"\033[0 q]";;
     esac > $(tty)
 }
 
 
 t_gen_ptrn () {
     export P=""
-    local wll=$(tput cols)
     for l in $(seq 7); do 
-        for c in $(seq $wll); do
+        for c in $(seq $COLUMNS); do
             case "$l" in
                 1) [ "$((c%8))" != "0" ] ;;
                 2) [ "$((c%8))" = "1" ] || [ "$((c%8))" = "7" ] ;;
@@ -118,12 +112,7 @@ t_gen_ptrn () {
                 6) [ "$((c%8))" = "5" ] || [ "$((c%8))" = "7" ] ;;
                 7) [ "$((c%8))" != "6" ] ;;
                 *) false ;;
-            esac
-
-            [ "$?" = "0" ] &&
-                P="$P█" ||
-                P="$P "
-
+            esac && P="$P█" || P="$P "
         done
         P="$P\n"
     done
@@ -134,25 +123,18 @@ t_prnt_ptrn () {
 }
 
 t_cls_ptrn () {
-    local lines=$(tput lines)
     tput cup 7 0
-    for i in $(seq $((lines-15))); do 
-        tput el
-        tput cud1
-    done
+    printf " %.0s" $(seq $(( (LINES-14) * COLUMNS)))
     t_drw_ptrn
 }
 
 t_drw_ptrn () {
-    local prfx=$1
-    local flr=$(tput lines)
     t_drw_txt 0 0 "$P"
-    t_drw_txt 0 $((flr-7)) "$(printf "$P" | rev)"
+    t_drw_txt 0 $((LINES-7)) "$(printf "$P" | rev)"
 }
 
 # draws inside the given area
-#
-# $0 x y w h
+#   t_drw_box x y w h
 #
 t_drw_box () {
     local x=$1 y=$2 w=$3 h=$4
@@ -174,6 +156,9 @@ t_drw_box () {
     printf "╝"
 }
 
+# draw text at location
+#   t_drw_txt x y [txt...]
+#
 t_drw_txt () {
     local x=$1 y=$2 
     shift 2
@@ -186,71 +171,67 @@ t_drw_txt () {
 }
 
 t_msg () {
-    local msg="$@"
-    local width=$(echo "$msg" | max_line_length) height=$(echo "$msg" | wc -l)
-    local lines=$(tput lines) cols=$(tput cols)
+    eval $(h_txt_w_h "$@\n")
+    eval $(h_cntr $w $h)
+    t_drw_box $((x-1)) $((y-1)) $((w+2)) $((h+2))
+    t_drw_txt $x $y "$@"
+}
 
-    local x=$((((cols+width)/2)-width))
-    local y=$((((lines+height)/2)-height))
+h_drw_btns () {
+    local btn_y=$1 sel=$2 i=0
+    while read -r btn; do
+        set -- $btn
+        x=$1; shift; txt="${RESET}$@"
 
-    t_drw_box $((x-1)) $((y-1)) $((width+2)) $((height+2))
-    t_drw_txt $x $y "$msg"
+        [ "$sel" = "$i" ] \
+            && txt="${COLOR_BG}$@"
+
+        t_drw_txt $x $btn_y "$txt${RESET}" 
+        i=$((i+1))
+    done
+}
+
+h_cntr() {
+    local w=$1 h=$2
+    echo "x=$(( ( (COLUMNS+w)/2 ) - w ))"
+    echo "y=$(( ( (LINES+h)/2 ) - h ))"
+}
+
+h_txt_w_h() {
+    echo "w=$(printf "$*" | max_line_length)"
+    echo "h=$(printf "$*" | wc -l)"
 }
 
 t_dialog() {
-    local msg="$1"
-    shift
-    local btns="$@"
-    local btns_len="$#"
-    local btns_width=${#btns}
+    local msg="$1"; shift
 
-    local width=$(printf "$msg\n$btns" | max_line_length) height=$(echo "$msg" | wc -l)
-    local lines=$(tput lines) cols=$(tput cols)
+    local btns_len="$#" w_btns=$(echo "$*" | wc -c)
 
-    local x=$((((cols+width)/2)-width))
-    local y=$((((lines+height)/2)-height))
+    eval $(h_txt_w_h "$msg\n$@\n")
+    eval $(h_cntr $w $h)
 
-    local btn_y=$((y+height+1))
-    local btn_x=$((((cols+btns_width)/2)-btns_width))
+    local btn_y=$((y+h-1)) \
+        btn_x=$(( ((COLUMNS+w_btns) / 2) - w_btns ))
 
-    btns=""
+    btns="" 
     for btn in "$@"; do
-        btns="$btns$btn $btn_x "
+        btns="$btns$btn_x $btn\n"
         btn_x=$((btn_x+${#btn}+1))
     done
-    height=$((height+2))
 
-    t_drw_box $((x-1)) $((y-1)) $((width+2)) $((height+2))
+    t_drw_box $((x-1)) $((y-1)) $((w+2)) $((h+2)) 
     t_drw_txt $x $y "$msg"
 
-    local btn_count=$(seq $#)
-
-
     local sel="0"
-
     while true; do
-        set -- $btns
+        printf "$btns" | h_drw_btns $btn_y $sel
 
-        for i in $btn_count; do 
-            txt=$1; shift
-            x=$1; shift
-
-            [ "$((sel+1))" == "$i" ] && {
-               txt="${COLOR_BG}$txt" 
-            } || {
-                txt="${RESET}$txt"
-            }
-
-            t_drw_txt $x $btn_y "$txt${RESET}"
-        done
-
-        c=$(readc)
-        case "$c" in
+        case "$(readc)" in
             '') break;;
             '[A'|'[C'|'	') 
-                sel=$(((sel+1)%btns_len)) ;;
+                sel=$(((sel+1)%btns_len));;
             '[B'|'[D') 
-                sel=$(((sel+btns_len-1)%btns_len));;
+                sel=$(((sel+i-1)%btns_len));;
         esac
 
     done
@@ -270,11 +251,11 @@ t_input () {
     read var
     echo $var 
     t_set_tty
+    t_no_cur > $(tty)
 }
 
 t_tail() {
-    local file=$1 lines=$(tput lines)
-    t_drw_txt 0 7 "$(tail -$((lines-14)) $1)"
+    t_drw_txt 0 7 "$(tail -$((LINES-14)) $1)"
 }
 
 
@@ -283,6 +264,9 @@ t_demo () {
     t_no_cur
     t_drw_ptrn "${COLOR_FG}"
     t_prompt "Hello world?"
+    
+    t_dialog "Can a match box?" "<Yes>" "<No>" "<No but a tin can>"
+
     t_cls_ptrn
     name=$(t_input "Enter your name")
     t_prompt "Hello $name"
@@ -301,3 +285,5 @@ t_demo () {
 
     t_clean
 }
+
+t_demo
