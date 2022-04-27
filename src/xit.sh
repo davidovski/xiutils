@@ -75,7 +75,7 @@ t_yes_cur () {
 }
 
 t_set_cur () {
-    tput cup $1 $2
+    printf "[$1;$2H"
 }
 
 max_line_length () {
@@ -123,14 +123,14 @@ t_prnt_ptrn () {
 }
 
 t_cls_ptrn () {
-    tput cup 7 0
+    printf "[7;0H" 
     printf " %.0s" $(seq $(( (LINES-14) * COLUMNS)))
     t_drw_ptrn
 }
 
 t_drw_ptrn () {
-    t_drw_txt 0 0 "$P"
-    t_drw_txt 0 $((LINES-7)) "$(printf "$P" | rev)"
+    t_drw_txt 1 1 "$P"
+    t_drw_txt 1 $((LINES-6)) "$(printf "$P" | rev)"
 }
 
 # draws inside the given area
@@ -139,21 +139,18 @@ t_drw_ptrn () {
 t_drw_box () {
     local x=$1 y=$2 w=$3 h=$4
     
-    t_set_cur $y $x
-    printf "${COLOR_FG}╔"
-    printf "═%.0s" $(seq $((w-2)))
-    printf "╗"
-    for i in $(seq $((h-2))); do 
-        t_set_cur $((y+i)) $x
-        printf "${COLOR_FG}║"
-        printf " %.0s" $(seq $((w-2)))
-        printf "║"
-    done
 
-    t_set_cur $((y+h-1)) $x
-    printf "${COLOR_FG}╚"
-    printf "═%.0s" $(seq $((w-2)))
-    printf "╝"
+    l="$(printf "${COLOR_FG}║"
+        printf " %.0s" $(seq $((w-2)))
+        printf "${COLOR_FG}║"
+    )"
+    b="$(printf "═%.0s" $(seq $((w-2))))"
+
+    printf "[${y};${x}H${COLOR_FG}╔$b╗"
+    for i in $(seq $((y+1)) $((y+h-1))); do 
+        printf "[${i};${x}H$l"
+    done
+    printf "[$((y+h-1));${x}H${COLOR_FG}╚$b╝"
 }
 
 # draw text at location
@@ -164,42 +161,53 @@ t_drw_txt () {
     shift 2
 
     echo "$@" | while IFS= read -r line; do
-        t_set_cur $y $x
+        printf "[${y};${x}H${COLOR_FG}$line"
         y=$((y+1))
-        printf "${COLOR_FG}$line"
     done 
 }
 
 t_msg () {
-    eval $(h_txt_w_h "$@\n")
-    eval $(h_cntr $w $h)
-    t_drw_box $((x-1)) $((y-1)) $((w+2)) $((h+2))
-    t_drw_txt $x $y "$@"
+    h_txt_w_h "$@\n"
+    h_cntr $w $h
+    {
+        t_drw_box $((x-1)) $((y-1)) $((w+2)) $((h+2))
+        t_drw_txt $x $y "$@"
+    } > $(tty)
 }
 
 h_drw_btns () {
-    local btn_y=$1 sel=$2 i=0
+    local sel=$1 i=0
     while read -r btn; do
-        set -- $btn
-        x=$1; shift; txt="${RESET}$@"
-
-        [ "$sel" = "$i" ] \
-            && txt="${COLOR_BG}$@"
-
-        t_drw_txt $x $btn_y "$txt${RESET}" 
+        [ "$sel" = "$i" ] && styl="${COLOR_BG}" || styl="${COLOR_FG}"
+        h_drw_btn "${styl}" ${btn}
         i=$((i+1))
     done
 }
 
+h_drw_btn () {
+    styl="$1" x=$2 y=$3 ; shift 3; txt="$@"
+    t_drw_txt $x $y "${styl}$txt${RESET}" 
+}
+
 h_cntr() {
     local w=$1 h=$2
-    echo "x=$(( ( (COLUMNS+w)/2 ) - w ))"
-    echo "y=$(( ( (LINES+h)/2 ) - h ))"
+    x=$(( ( (COLUMNS+w)/2 ) - $1 ))
+    y=$(( ( (LINES+h)/2 ) - $2 ))
 }
 
 h_txt_w_h() {
-    echo "w=$(printf "$*" | max_line_length)"
-    echo "h=$(printf "$*" | wc -l)"
+    w=$(printf "$*" | max_line_length)
+    h=$(printf "$*" | wc -l)
+}
+
+h_t_result() {
+    local s=$1 i=0; shift
+    for opt in "$@"; do
+        case " $s " in 
+            *" $i "*) echo "$opt";;
+        esac
+        i=$((i+1))
+    done
 }
 
 t_dialog() {
@@ -207,15 +215,15 @@ t_dialog() {
 
     local btns_len="$#" w_btns=$(echo "$*" | wc -c)
 
-    eval $(h_txt_w_h "$msg\n$@\n")
-    eval $(h_cntr $w $h)
+    h_txt_w_h "$msg\n $*\n"
+    h_cntr $w $h
 
     local btn_y=$((y+h-1)) \
-        btn_x=$(( ((COLUMNS+w_btns) / 2) - w_btns ))
+        btn_x=$(( ((COLUMNS+w_btns) / 2) - w_btns))
 
     btns="" 
     for btn in "$@"; do
-        btns="$btns$btn_x $btn\n"
+        btns="$btns$btn_x $btn_y $btn\n"
         btn_x=$((btn_x+${#btn}+1))
     done
 
@@ -224,18 +232,69 @@ t_dialog() {
 
     local sel="0"
     while true; do
-        printf "$btns" | h_drw_btns $btn_y $sel
+        printf "$btns" | h_drw_btns $sel
 
         case "$(readc)" in
             '') break;;
-            '[A'|'[C'|'	') 
+            '[B'|'[C'|'	') 
                 sel=$(((sel+1)%btns_len));;
-            '[B'|'[D') 
-                sel=$(((sel+i-1)%btns_len));;
+            '[A'|'[D') 
+                sel=$(((sel+btns_len-1)%btns_len));;
         esac
 
     done
-    return $sel
+    export T_RESULT=$(h_t_result "$sel" "$@")
+}
+
+t_check () {
+    local msg="$1"; shift
+    local btns_len="$#" 
+    btns_len=$((btns_len+1))
+
+    text=`{
+        printf "$msg\n"
+        for b in "$@"; do  
+            printf "[ ] $b${RESET}\n"
+        done
+        printf "    <OK>${RESET}\n"
+    }`
+
+    t_msg "$text"
+
+    x=$((x+4)) y=$((y+1))
+    local py=$((y))
+    btns=""
+    for btn in "$@"; do  
+        btns="$btns$x $y $btn\n"
+        y=$((y+1))
+    done
+    btns="$btns$x $y <OK>\n"
+
+    local sel="0" checked=""
+    while true; do
+        printf "$btns" | h_drw_btns $sel
+        case "$(readc)" in
+            '[B'|'[C'|'	') 
+                sel=$(((sel+1)%btns_len))
+                ;;
+            '[A'|'[D') 
+                sel=$(((sel+btns_len-1)%btns_len));;
+            ' '|'') 
+                [ "$((sel+1))" = "$btns_len" ] && break || {
+                case " $checked " in 
+                    *$sel*) 
+                        checked=$(echo "$checked" | sed "s/$sel//")
+                        t_drw_txt $((x-3)) $((py+sel)) " "
+                        ;;
+                    *)
+                        checked="$checked$sel "
+                        t_drw_txt $((x-3)) $((py+sel)) "x"
+                        ;;
+                esac
+            };;
+        esac
+    done
+    export T_RESULT=$(h_t_result "$checked" "$@")
 }
 
 t_prompt () {
@@ -247,11 +306,11 @@ t_input () {
     t_msg "$@
 
 >" > $(tty)
-    t_yes_cur > $(tty)
+    t_yes_cur
     read var
-    echo $var 
     t_set_tty
-    t_no_cur > $(tty)
+    t_no_cur
+    export T_RESULT="$var"
 }
 
 t_tail() {
@@ -262,15 +321,21 @@ t_tail() {
 t_demo () {
     t_init
     t_no_cur
-    t_drw_ptrn "${COLOR_FG}"
+    #t_drw_ptrn "${COLOR_FG}"
     t_prompt "Hello world?"
+    t_cls_ptrn
+
+    t_check "Please select one" "yeast" "fish and chips" "twigs" "tuna" "pizza" "aspic"
+    t_prompt "You selected the following: $T_RESULT"
+    t_cls_ptrn
     
     t_dialog "Can a match box?" "<Yes>" "<No>" "<No but a tin can>"
-
+    t_prompt "You selected the following: $T_RESULT"
     t_cls_ptrn
-    name=$(t_input "Enter your name")
-    t_prompt "Hello $name"
 
+    #t_cls_ptrn
+    t_input "Enter your name"
+    t_prompt "Hello $T_RESULT"
     t_cls_ptrn
 
     file=./xit.sh
@@ -286,4 +351,4 @@ t_demo () {
     t_clean
 }
 
-t_demo
+"$@"
