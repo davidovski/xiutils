@@ -26,7 +26,9 @@
 
 . /usr/lib/colors.sh
 
-COLOR_FG=${LIGHT_BLUE}
+COLOR_FG=${WHITE}
+COLOR_FG2=${LIGHT_BLUE}
+COLOR_PTRN=${LIGHT_BLUE}
 COLOR_BG=${BG_WHITE}
 
 t_init () {
@@ -57,7 +59,6 @@ readc () {
     [ "$s" = "" ]  && {
         s="$s$(dd bs=1 count=2 of=/dev/stdout 2>/dev/null)"
     }   
-    
     printf "$s"
 } 
 
@@ -129,8 +130,8 @@ t_cls_ptrn () {
 }
 
 t_drw_ptrn () {
-    t_drw_txt 1 1 "$P"
-    t_drw_txt 1 $((LINES-6)) "$(printf "$P" | rev)"
+    t_drw_txt_clr "${COLOR_PTRN}" 1 1 "$P"
+    t_drw_txt_clr "${COLOR_PTRN}" 1 $((LINES-6)) "$(printf "$P" | rev)"
 }
 
 # draws inside the given area
@@ -140,17 +141,17 @@ t_drw_box () {
     local x=$1 y=$2 w=$3 h=$4
     
 
-    l="$(printf "${COLOR_FG}║"
+    l="$(printf "${COLOR_FG2}║"
         printf " %.0s" $(seq $((w-2)))
-        printf "${COLOR_FG}║"
+        printf "${COLOR_FG2}║"
     )"
     b="$(printf "═%.0s" $(seq $((w-2))))"
 
-    printf "[${y};${x}H${COLOR_FG}╔$b╗"
+    printf "[${y};${x}H${COLOR_FG2}╔$b╗"
     for i in $(seq $((y+1)) $((y+h-1))); do 
         printf "[${i};${x}H$l"
     done
-    printf "[$((y+h-1));${x}H${COLOR_FG}╚$b╝"
+    printf "[$((y+h-1));${x}H${COLOR_FG2}╚$b╝"
 }
 
 # draw text at location
@@ -161,7 +162,19 @@ t_drw_txt () {
     shift 2
 
     echo "$@" | while IFS= read -r line; do
-        printf "[${y};${x}H${COLOR_FG}$line"
+        printf "[${y};${x}H$line"
+        y=$((y+1))
+    done 
+}
+
+# draw colored text
+#
+t_drw_txt_clr () {
+    local clr=$1 x=$2 y=$3 
+    shift 3
+
+    echo "$@" | while IFS= read -r line; do
+        printf "[${y};${x}H${clr}$line"
         y=$((y+1))
     done 
 }
@@ -171,14 +184,14 @@ t_msg () {
     h_cntr $w $h
     {
         t_drw_box $((x-1)) $((y-1)) $((w+2)) $((h+2))
-        t_drw_txt $x $y "$@"
+        t_drw_txt_clr "${COLOR_FG}" $x $y "$@"
     } > $(tty)
 }
 
 h_drw_btns () {
     local sel=$1 i=0
     while read -r btn; do
-        [ "$sel" = "$i" ] && styl="${COLOR_BG}" || styl="${COLOR_FG}"
+        [ "$sel" = "$i" ] && styl="${COLOR_BG}" || styl="${COLOR_FG2}"
         h_drw_btn "${styl}" ${btn}
         i=$((i+1))
     done
@@ -186,7 +199,7 @@ h_drw_btns () {
 
 h_drw_btn () {
     styl="$1" x=$2 y=$3 ; shift 3; txt="$@"
-    t_drw_txt $x $y "${styl}$txt${RESET}" 
+    t_drw_txt $x $y "${COLOR_FG2}${styl}$txt${RESET}" 
 }
 
 h_cntr() {
@@ -228,7 +241,44 @@ t_dialog() {
     done
 
     t_drw_box $((x-1)) $((y-1)) $((w+2)) $((h+2)) 
-    t_drw_txt $x $y "$msg"
+    t_drw_txt_clr ${COLOR_FG} $x $y "$msg"
+
+    local sel="0"
+    while true; do
+        printf "$btns" | h_drw_btns $sel
+
+        case "$(readc)" in
+            '') break;;
+            '[B'|'[C'|'	') 
+                sel=$(((sel+1)%btns_len));;
+            '[A'|'[D') 
+                sel=$(((sel+btns_len-1)%btns_len));;
+        esac
+
+    done
+    export T_RESULT=$(h_t_result "$sel" "$@")
+}
+
+t_radio() {
+    local msg="$1"; shift
+
+    local btns_len="$#" w_btns=$(echo "$*" | wc -c)
+    text=`{
+        printf "$msg\n"
+        for b in "$@"; do  
+            printf "╚═$b${RESET}\n"
+        done
+    }`
+
+    t_msg "$text"
+
+    x=$((x+2)) y=$((y+1))
+    local py=$((y))
+    btns=""
+    for btn in "$@"; do  
+        btns="$btns$x $y $btn\n"
+        y=$((y+1))
+    done
 
     local sel="0"
     while true; do
@@ -321,11 +371,16 @@ t_tail() {
 t_demo () {
     t_init
     t_no_cur
-    #t_drw_ptrn "${COLOR_FG}"
+
+    t_cls_ptrn
     t_prompt "Hello world?"
     t_cls_ptrn
 
-    t_check "Please select one" "yeast" "fish and chips" "twigs" "tuna" "pizza" "aspic"
+    t_radio "Pick one:" "toast" "bread" "bread but fishy" "empty sandwich"
+    t_prompt "You selected the following: $T_RESULT"
+    t_cls_ptrn
+
+    t_check "Please select your order:" "yeast" "fish and chips" "twigs" "tuna" "pizza" "aspic"
     t_prompt "You selected the following: $T_RESULT"
     t_cls_ptrn
     
