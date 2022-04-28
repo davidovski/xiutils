@@ -182,10 +182,8 @@ t_drw_txt_clr () {
 t_msg () {
     h_txt_w_h "$@\n"
     h_cntr $w $h
-    {
-        t_drw_box $((x-1)) $((y-1)) $((w+2)) $((h+2))
-        t_drw_txt_clr "${COLOR_FG}" $x $y "$@"
-    } > $(tty)
+    t_drw_box $((x-1)) $((y-1)) $((w+2)) $((h+2))
+    t_drw_txt_clr "${COLOR_FG}" $x $y "$@"
 }
 
 h_drw_btns () {
@@ -224,8 +222,8 @@ h_t_result() {
 }
 
 t_dialog() {
+    # TODO these are messy af
     local msg="$1"; shift
-
     local btns_len="$#" w_btns=$(echo "$*" | wc -c)
 
     h_txt_w_h "$msg\n $*\n"
