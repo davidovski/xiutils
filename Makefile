@@ -35,7 +35,6 @@ install-glyphs: src/glyphs.sh
 	install -Dm755 src/glyphs.sh ${DESTDIR}${PREFIX}/lib
 
 
-
 check-parseconf: shtests parseconf test/parseconf.sh
 	${DIST}/shtests ./test/parseconf.sh
 
@@ -50,7 +49,8 @@ parseconf: src/parseconf.sh
 	install -Dm755 src/parseconf.sh ${DIST}/parseconf
 
 colors: src/colors.list
-	sh src/generate_colors.sh ${DIST}/ src/colors.list
+	cp src/colors.sh ${DIST}
+	cp src/colors.h ${DIST}
 
 clean:
 	rm -r ${DIST}
