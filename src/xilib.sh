@@ -15,7 +15,7 @@ format_bytes () {
 #
 checkroot () {
     [ "$(id -u)" = "0" ] || {
-        printf "${RED}Please run as root!\n"
+        printf "${RED}Please run as root!${RESET}\n"
         exit 1
     }
 }
