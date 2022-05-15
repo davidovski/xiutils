@@ -49,7 +49,7 @@ t_set_tty () {
 t_clean () {
     stty $SAVED_TTY_SETTINGS
     tput clear
-    reset
+    t_yes_cur
 }
 
 readc () {
@@ -349,8 +349,26 @@ t_prompt () {
     t_dialog "$@" "<ok>"
 }
 
+t_yesno () {
+    t_dialog "$@" "<yes>" "<no>"
+    [ "$T_RESULT" = "<yes>" ]
+}
+
 t_input () {
     stty $SAVED_TTY_SETTINGS
+    t_msg "$@
+
+>" > $(tty)
+    t_yes_cu
+    read var
+    t_set_tty
+    t_no_cur
+    export T_RESULT="$var"
+}
+
+t_input_hidden () {
+    stty $SAVED_TTY_SETTINGS
+    stty -echo
     t_msg "$@
 
 >" > $(tty)
@@ -365,14 +383,40 @@ t_tail() {
     t_drw_txt 0 7 "$(tail -$((LINES-14)) $1)"
 }
 
+t_paged_radio () {
+    perpage=9
+    heading=$1
+    shift
+    
+    T_RESULT="more..."
+    page=0
+    max_pages=$((($#/perpage)+1))
+    while true; do
+        start=$((page*perpage))
+        current=$(echo $@ | tr ' ' '\n' | tail -$(($#-start)) | head -$perpage)
+        current="$current more..."
+
+        t_cls_ptrn
+        t_radio "$heading" $current
+        [ "$T_RESULT" = "more..." ] && page=$(((page+1)%max_pages)) || return 0
+    done
+}
+
 
 t_demo () {
     t_init
     t_no_cur
 
+
     t_cls_ptrn
     t_prompt "Hello world?"
     t_cls_ptrn
+
+    t_paged_radio "Pick a number" $(seq 34)
+    t_prompt "You selected the following: $T_RESULT"
+    t_cls_ptrn
+
+    exit 1
 
     t_radio "Pick one:" "toast" "bread" "bread but fishy" "empty sandwich"
     t_prompt "You selected the following: $T_RESULT"
@@ -391,7 +435,7 @@ t_demo () {
     t_prompt "Hello $T_RESULT"
     t_cls_ptrn
 
-    file=./xit.sh
+    file=$2.sh
     [ -f $file ] && {
         t_tail $file
     } || {
