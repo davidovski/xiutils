@@ -8,7 +8,7 @@ DIST=dist
 
 .DEFAULT_GOAL := build
 
-install: install-hbar install-colors install-parseconf install-shtests install-glyphs
+install: install-hbar install-colors install-parseconf install-shtests install-glyphs install-xitui
 check: check-parseconf
 build: make-dist hbar shtests parseconf colors
 
@@ -33,6 +33,9 @@ install-colors: src/colors.list
 
 install-glyphs: src/glyphs.sh
 	install -Dm755 src/glyphs.sh ${DESTDIR}${PREFIX}/lib
+
+install-xitui: src/xitui.sh
+	install -Dm755 src/xitui.sh ${DESTDIR}${PREFIX}/lib
 
 
 check-parseconf: shtests parseconf test/parseconf.sh
