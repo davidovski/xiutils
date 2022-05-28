@@ -20,4 +20,15 @@ checkroot () {
     }
 }
 
+# reverse the order of lines
+#
+reverse_lines () {
+    local result=
+    while IFS= read -r line; do 
+        result="$line
+        $result"
+    done
+    echo "$result" 
+}
+
 
