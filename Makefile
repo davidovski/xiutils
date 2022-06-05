@@ -7,7 +7,7 @@ DIST=dist
 
 .DEFAULT_GOAL := build
 
-install: install-hbar install-colors install-parseconf install-shtests install-glyphs install-xitui install-xilib
+install: build install-hbar install-colors install-parseconf install-shtests install-glyphs install-xitui install-xilib
 check: check-parseconf
 build: make-dist hbar shtests parseconf colors
 

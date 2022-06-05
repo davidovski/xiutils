@@ -16,12 +16,14 @@ EOF
 # parse a single config file line
 #
 parse_line() {
-    [ $# = "0" ] && return
+    [ "$#" = 0 ] && return
 
     local line="$@"
     local key=$1
+
     shift
     local value="$@"
+    value=${value%#*}
 
     case $key in 
         "include")
@@ -108,6 +110,6 @@ $print_keys &&
     pattern="s/^$pattern:(.+)/\1/p;${count}"
 
 # strip whitespace
-sed "s/^#.*$\|\s(\s\+)\|^\s\|\s^\|;*$//g" $CONF_FILE |
+sed "s/^\s*#.*$\|\s(\s\+)\|^\s\|\s^\|;*$//g" $CONF_FILE |
     parse $@ | 
     sed -rn $pattern

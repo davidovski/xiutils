@@ -50,6 +50,20 @@ key4 value4
     [ "$retval" = "key2:value2" ]
 }
 
+test_comments_parsing() {
+    config="
+#key1 value1
+   #key2 value2
+#  this is a comment
+#key4 value4
+dict {
+    #nothing here
+}
+    "
+    retval=$(printf "$config" | ${PARSECONF} )
+    [ "x$retval" = "x" ]
+}
+
 
 test_list_parsing() {
     config="
