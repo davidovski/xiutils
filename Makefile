@@ -68,6 +68,6 @@ install-chroot: src/xichroot.sh
 
 # default-jvm
 #
-install-chroot: src/default-jvm.sh
+install-default-jvm: src/default-jvm.sh
 	install -Dm755 src/default-jvm.sh ${DESTDIR}${PREFIX}/bin/default-jvm
 
