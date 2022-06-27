@@ -1,0 +1,22 @@
+#!/usr/bin/env shmk
+
+CC=gcc
+
+LIBS="src/lib/*.sh"
+
+PROGS="
+hbar
+src/util/shmk.sh
+src/util/shtests.sh
+src/util/parseconf.sh
+src/tools/xichroot.sh
+src/tools/default-jvm.sh
+"
+
+prog_hbar () {
+    ${CC} -I${DIST} -o ${DIST}/hbar src/util/hbar.c
+}
+
+check_shtests () {
+    ${DIST}/shtests test/parseconf.sh
+}

@@ -1,0 +1,9 @@
+#!/bin/env shmk
+
+LIBS="
+src/lib/colors.sh
+"
+
+PROGS="
+src/util/shmk.sh
+"

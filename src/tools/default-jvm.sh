@@ -39,6 +39,9 @@ link ()  {
         "-l"|"--list")
             ls -1 $JVM_DIR
             ;;
+        "-h"|"--help")
+            usage
+            ;;
         *)
             link $1 \
             || link $JVM_DIR/$1 \

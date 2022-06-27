@@ -9,8 +9,7 @@
 #   shtests [FILE]
 #
 
-[ -f /usr/lib/colors.sh ] && . /usr/lib/colors.sh
-[ -f colors.sh ] && . colors.sh
+#include colors
 
 PASS="${BLUE}[ ${GREEN}PASS${BLUE} ]${RESET}"
 FAIL="${BLUE}[ ${RED}FAIL${BLUE} ]${RESET}"
