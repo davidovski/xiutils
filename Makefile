@@ -17,15 +17,15 @@ build: bootstrap
 	@echo all xiutils
 	@./build.shmk build
 
-clean:
+clean: shmk0
 	@rm -r dist
 	@rm -r shmk
 	@./build.shmk clean
 
-check:
+check: build
 	@./build.shmk check
 
-install:
+install: build
 	@./build.shmk install
 
 
