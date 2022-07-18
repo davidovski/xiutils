@@ -5,7 +5,6 @@ CC=gcc
 LIBS="src/lib/*.sh"
 
 PROGS="
-hbar
 src/util/shmk.sh
 src/util/shtests.sh
 src/util/parseconf.sh

@@ -27,10 +27,18 @@ find_file () {
 }
 
 parse_lines () {
+    included=""
     while IFS= read -r line; do 
         case "$line" in 
             "#include "*)
-                cat $(find_file ${line#\#include}) | parse_lines
+                file="$(find_file ${line#\#include})"
+                case "$included" in 
+                    *"$file"*)
+                        ;;
+                    *)
+                        cat $file | parse_lines
+                        included="$included $file"
+                esac
                 ;;
             "#>"*)
                 eval ${line#'#>'}
@@ -50,7 +58,7 @@ build_shmk () {
     [ -f "$1" ] || return 1
     [ ! -z "$2" ] && output="$2"
     [ -z "$output" ] && output=$(basename $1) 
-    output=${output%.*}
+    output=./${output%.*}
 
     $clean && {
         rm -f $output
@@ -91,7 +99,7 @@ interpret_shmk () {
                     lib=$(basename $lib)
                     lib="${lib%.*}"
                     cmdlist="$cmdlist
-                    install -Dm755 $DIST/$lib ${DESTDIR}/${PREFIX}/lib/$lib #Install library $lib"
+                    install -Dm755 $DIST/$lib ${DESTDIR}/${PREFIX}/lib/$lib.sh #Install library $lib"
                 done
                 ;;
             clean)
