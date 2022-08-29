@@ -147,12 +147,13 @@ interpret_shmk () {
     i=-1
     echo "$cmdlist" | while read -r cmd; do
         i=$((i+1))
-        printf "${LIGHT_BLACK}[${LIGHT_BLUE}%s${LIGHT_BLACK}/${LIGHT_BLUE}%s${LIGHT_BLACK}] ${LIGHT_WHITE}%s${RESET}\n" "$i" "$len" "${cmd#*#}"
+        printf "${LIGHT_BLACK}[${LIGHT_BLUE}%s${LIGHT_BLACK}/${LIGHT_BLUE}%s${LIGHT_BLACK}] ${LIGHT_WHITE}%s${RESET}%s" "$i" "$len" "${cmd#*#}" "$($verbose && printf "\n" || printf "\r")"
         ${cmd%#*} 2>&1 > $out || {
-            printf "${RED}Error $?\n"
+            printf "\n${RED}Error $?\n"
             exit 1
         }
     done
+    printf "\n"
 }
 
 search_path=".
