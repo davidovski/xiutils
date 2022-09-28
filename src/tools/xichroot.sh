@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # This script is intended for root users to automatically mount requried dirs and chroot into an installed system
 # simplifed version of arch-chroot from <https://github.com/archlinux/arch-install-scripts>
 
@@ -13,7 +13,7 @@ ignore_error() {
 }
 
 chroot_add_mount() {
-  mount "$@" && CHROOT_ACTIVE_MOUNTS=("$2" "${CHROOT_ACTIVE_MOUNTS[@]}")
+  mount "$@" && CHROOT_ACTIVE_MOUNTS="$2 $CHROOT_ACTIVE_MOUNTS"
 }
 
 chroot_maybe_add_mount() {
@@ -24,14 +24,13 @@ chroot_maybe_add_mount() {
 }
 
 chroot_setup() {
-  CHROOT_ACTIVE_MOUNTS=()
-  [[ $(trap -p EXIT) ]] && die '(BUG): attempting to overwrite existing EXIT trap'
+  CHROOT_ACTIVE_MOUNTS=""
   trap 'chroot_teardown' EXIT
 
   chroot_add_mount proc "$target/proc" -t proc -o nosuid,noexec,nodev 
   chroot_add_mount sys "$target/sys" -t sysfs -o nosuid,noexec,nodev,ro 
-  ignore_error chroot_maybe_add_mount "[[ -d '$1/sys/firmware/efi/efivars' ]]" \
-      efivarfs "$target/sys/firmware/efi/efivars" -t efivarfs -o nosuid,noexec,nodev 
+  ignore_error chroot_maybe_add_mount "[ -d '$1/sys/firmware/efi/efivars' ]" \
+      efivarfs "$target/sys/firmware/efi/efivars" -t efivarfs -o nosuid,noexec,nodev
   chroot_add_mount udev "$target/dev" -t devtmpfs -o mode=0755,nosuid 
   chroot_add_mount devpts "$target/dev/pts" -t devpts -o mode=0620,gid=5,nosuid,noexec 
   chroot_add_mount shm "$target/dev/shm" -t tmpfs -o mode=1777,nosuid,nodev 
@@ -40,14 +39,13 @@ chroot_setup() {
 }
 
 chroot_teardown() {
-  if (( ${#CHROOT_ACTIVE_MOUNTS[@]} )); then
-    umount "${CHROOT_ACTIVE_MOUNTS[@]}"
-  fi
+  [ -n "$CHROOT_ACTIVE_MOUNTS" ] &&
+    umount "$CHROOT_ACTIVE_MOUNTS"
   unset CHROOT_ACTIVE_MOUNTS
 }
 
-[ "$EUID" -eq 0 ] || die "Please run this as root"
-[[ -d $target ]] || die "$target is not a directory; cannot chroot!"
+[ "$(id -u)" -eq 0 ] || die "Please run this as root"
+[ -d "$target" ] || die "$target is not a directory; cannot chroot!"
 
 chroot_setup $@
 
@@ -56,3 +54,6 @@ if [ $# -gt 1 ]; then
 else
     chroot $@ /bin/sh -l
 fi
+
+chroot_teardown
+

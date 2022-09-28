@@ -13,6 +13,7 @@ src/tools/default-jvm.sh
 "
 
 prog_hbar () {
+    cp src/lib/colors.h ${DIST}
     ${CC} -I${DIST} -o ${DIST}/hbar src/util/hbar.c
 }
 
