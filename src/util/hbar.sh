@@ -1,5 +1,6 @@
 #!/bin/sh
 . /usr/lib/colors.sh
+. /usr/lib/xilib.sh
 
 move_up () {
     [ ! "$1" = "-1" ] &&
@@ -8,7 +9,7 @@ move_up () {
 
 move_down () {
     [ ! "$1" = "-1" ] &&
-        printf "\033[%dA" "$1"
+        printf "\033[%dB" "$1"
 }
 
 count_string () {
@@ -26,13 +27,13 @@ count_string () {
 hbar () {
     local width terminate human text color reset unit line count
     width=$(tput cols)
-    color=$BG_BLUE
-    reset=$BG_DEFAULT
+    color="$BLACK$BG_WHITE"
+    reset="$WHITE$BG_DEFAULT"
     terminate=false
     human=false
     line=0
 
-    while getopts ":T:c:r:u:l:ht" opt; do
+    while getopts "T:c:r:u:l:ht" opt; do
        case "$opt" in
            T)
                text="$OPTARG"
@@ -81,7 +82,12 @@ hbar () {
     while [ "$i" -lt "$width" ]; do 
         [ "$i" = "$reset_at" ] && printf "$reset"
 
-        printf " "
+        [ "${#text}" -gt 0 ] && {
+            printf "%s" "${text%%${text#?}}"
+            text="${text#?}"
+        } || {
+            printf " "
+        }
         i=$((i+1))
     done
 
@@ -92,4 +98,4 @@ hbar () {
     exit 0
 }
 
-hbar $@
+printf "%s" "$(hbar "$@")"
